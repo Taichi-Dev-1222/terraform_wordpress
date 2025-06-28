@@ -1,0 +1,9 @@
+# Ignore Ansible secrets, virtualenv, and installers
+.env.yml
+.venv/
+session-manager-plugin.pkg
+
+.terraform/
+.terraform.lock.hcl/
+terraform.tfstate
+terraform.tfstate.backup

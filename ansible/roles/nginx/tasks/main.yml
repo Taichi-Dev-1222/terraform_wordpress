@@ -1,0 +1,64 @@
+- name: Ensure Nginx is installed
+  yum:
+    name: nginx
+    state: latest
+
+- name: Ensure Nginx is running
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Create the document root directory
+  file:
+    path: "/var/www/wp.dev-tf-wp.com"
+    state: directory
+    recurse: yes
+    owner: nginx
+    group: nginx
+    mode: '0755'
+
+- name: Ensure pip is installed
+  yum:
+    name: python3-pip
+    state: present
+
+- name: Install pexpect for expect module (optional)
+  pip:
+    name: pexpect
+    executable: pip3
+
+- name: Install httpd-tools (for htpasswd)
+  yum:
+    name: httpd-tools
+    state: present
+
+- name: Create .htpasswd file (only if auth is enabled)
+  command: htpasswd -bc /etc/nginx/.htpasswd "{{ basic_auth_user }}" "{{ basic_auth_password }}"
+  args:
+    creates: /etc/nginx/.htpasswd
+  when: basic_auth_enabled
+
+- name: Remove .htpasswd file if auth is disabled
+  file:
+    path: /etc/nginx/.htpasswd
+    state: absent
+  when: not basic_auth_enabled
+
+- name: Copy nginx main config and virtual host files
+  copy:
+    src: "{{ item.src }}"
+    dest: "/etc/nginx/{{ item.dest }}"
+    backup: no
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: "roles/nginx/files/nginx.conf", dest: "nginx.conf" }  
+
+- name: Deploy nginx virtual host config
+  template:
+    src: roles/nginx/templates/wp.dev-tf-wp.com.conf.j2
+    dest: /etc/nginx/conf.d/wp.dev-tf-wp.com.conf
+    mode: '0644'
+  notify: restart nginx

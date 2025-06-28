@@ -1,0 +1,21 @@
+---
+- name: Install CloudWatch Agent
+  yum:
+    name: amazon-cloudwatch-agent
+    state: present
+
+- name: Copy CloudWatch agent config
+  copy:
+    src: roles/cloudwatch/files/cloudwatch-agent-config.json
+    dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    mode: '0644'
+
+- name: Start and enable CloudWatch Agent
+  command: >
+    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+    -a fetch-config
+    -m ec2
+    -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+    -s
+  notify: Restart cwa
+

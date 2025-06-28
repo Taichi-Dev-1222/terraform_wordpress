@@ -1,0 +1,5 @@
+---
+- name: Restart cwa
+  service:
+    name: amazon-cloudwatch-agent
+    state: restarted

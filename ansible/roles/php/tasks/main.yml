@@ -1,0 +1,31 @@
+- name: Install PHP and PHP-FPM
+  yum:
+    name:
+      - php
+      - php-fpm
+      - php-mysqlnd
+      - php-cli
+      - php-curl
+      - php-mbstring
+      - php-xml
+      - php-gd
+    state: present
+    update_cache: yes
+
+- name: Ensure PHP-FPM is running and enabled
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: true
+
+- name: copy www.conf
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    backup: no
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - { src: roles/php/files/www.conf, dest: /etc/php-fpm.d/www.conf }
+  notify: restart php-fpm

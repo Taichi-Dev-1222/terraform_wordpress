@@ -1,0 +1,62 @@
+- name: Download latest WordPress
+  get_url:
+    url: https://ja.wordpress.org/latest-ja.tar.gz
+    dest: /tmp/wordpress.tar.gz
+    mode: '0755'
+
+- name: Extract WordPress
+  unarchive:
+    src: /tmp/wordpress.tar.gz
+    dest: /var/www/
+    remote_src: yes
+    creates: /var/www/wordpress
+
+- name: Ensure rsync is installed
+  yum:
+    name: rsync
+    state: present
+
+- name: Move WordPress files to web root
+  command: >
+    rsync -a /var/www/wordpress/ /var/www/wp.dev-tf-wp.com/
+  args:
+    creates: /var/www/wp.dev-tf-wp.com/wp-config-sample.php
+
+- name: Remove temporary WordPress directory
+  file:
+    path: /var/www/wordpress
+    state: absent
+
+- name: Ensure unzip is installed
+  yum:
+    name: unzip
+    state: present
+
+- name: Download WP Offload Media Lite plugin
+  get_url:
+    url: https://downloads.wordpress.org/plugin/amazon-s3-and-cloudfront.latest-stable.zip
+    dest: /tmp/amazon-s3-and-cloudfront.zip
+    mode: '0644'
+
+- name: Unzip WP Offload Media Lite plugin
+  unarchive:
+    src: /tmp/amazon-s3-and-cloudfront.zip
+    dest: /var/www/wp.dev-tf-wp.com/wp-content/plugins/
+    remote_src: yes
+
+- name: Remove zip file after extraction
+  file:
+    path: /tmp/amazon-s3-and-cloudfront.zip
+    state: absent
+
+
+- name: Copy wp-config.php
+  template:
+    src: wp-config.php.j2
+    dest: /var/www/wp.dev-tf-wp.com/wp-config.php
+    owner: nginx
+    group: nginx
+    mode: '0755'
+  notify:
+    - Restart PHP-FPM
+    - Restart Nginx

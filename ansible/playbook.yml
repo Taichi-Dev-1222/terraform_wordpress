@@ -1,0 +1,11 @@
+---
+- hosts: instance
+  become: true
+  vars_files:
+    - ./.env.yml
+  roles:
+    - nginx
+    - php
+    - wordpress
+    - cloudwatch
+
